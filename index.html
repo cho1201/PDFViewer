@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>구글 드라이브 PDF 뷰어</title>
+<style>
+  body { display: flex; font-family: Arial, sans-serif; }
+  #controls { width: 200px; padding: 10px; border-right: 1px solid #ccc; }
+  #file-list { list-style: none; padding: 0; }
+  #file-list li { margin-bottom: 10px; }
+  #pdf-viewer { flex: 1; padding: 10px; }
+  canvas { border: 1px solid #000; }
+</style>
+</head>
+<body>
+
+<div id="controls">
+  <button id="login-button">구글 계정 로그인</button>
+  <h2>PDF 목록</h2>
+  <ul id="file-list"></ul>
+</div>
+
+<div id="pdf-viewer">
+  <canvas id="pdf-canvas"></canvas>
+</div>
+
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://mozilla.github.io/pdf.js/build/pdf.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>

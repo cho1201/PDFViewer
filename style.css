@@ -1,0 +1,24 @@
+body {
+  display: flex;
+  font-family: Arial, sans-serif;
+}
+
+#pdf-list {
+  width: 200px;
+  padding: 10px;
+  border-right: 1px solid #ccc;
+}
+
+#pdf-list ul {
+  list-style: none;
+  padding: 0;
+}
+
+#pdf-list li {
+  margin-bottom: 10px;
+}
+
+#pdf-viewer {
+  flex: 1;
+  padding: 10px;
+}
