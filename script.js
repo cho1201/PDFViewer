@@ -5,8 +5,8 @@ const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/r
 const SCOPES = "https://www.googleapis.com/auth/drive.readonly";
 
 // ================= PDF.js 설정 =================
-const pdfjsLib = window['pdfjs-dist/build/pdf'];
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://mozilla.github.io/pdf.js/build/pdf.worker.js';
+const pdfjsLib = window['pdfjsLib'];
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
 // ================= DOM 요소 =================
 const loginButton = document.getElementById('login-button');
@@ -14,8 +14,12 @@ const fileList = document.getElementById('file-list');
 const canvas = document.getElementById('pdf-canvas');
 const ctx = canvas.getContext('2d');
 
-loginButton.onclick = () => gapi.load('client:auth2', initClient);
+// Google API 로드 완료 후 버튼 연결
+function gapiLoaded() {
+    loginButton.onclick = () => gapi.load('client:auth2', initClient);
+}
 
+// ================= 구글 API 초기화 =================
 function initClient() {
     gapi.client.init({
         apiKey: API_KEY,
@@ -23,14 +27,21 @@ function initClient() {
         discoveryDocs: DISCOVERY_DOCS,
         scope: SCOPES
     }).then(() => {
-        if (!gapi.auth2.getAuthInstance().isSignedIn.get()) {
-            gapi.auth2.getAuthInstance().signIn();
-        }
-        listPDFs();
+        const auth = gapi.auth2.getAuthInstance();
+        auth.isSignedIn.listen(updateSigninStatus);
+        updateSigninStatus(auth.isSignedIn.get());
     });
 }
 
-// PDF 파일 목록 가져오기
+function updateSigninStatus(isSignedIn) {
+    if (isSignedIn) {
+        listPDFs();
+    } else {
+        gapi.auth2.getAuthInstance().signIn();
+    }
+}
+
+// ================= PDF 파일 목록 가져오기 =================
 function listPDFs() {
     gapi.client.drive.files.list({
         q: "mimeType='application/pdf'",
@@ -50,14 +61,13 @@ function listPDFs() {
     });
 }
 
-// PDF 불러오기 및 렌더링
+// ================= PDF 불러오기 및 렌더링 =================
 function loadPDF(fileId) {
-    gapi.client.request({
-        path: `/drive/v3/files/${fileId}?alt=media`,
-        method: 'GET',
-        responseType: 'blob'
+    gapi.client.drive.files.get({
+        fileId: fileId,
+        alt: 'media'
     }).then(resp => {
-        const blob = resp.body;
+        const blob = new Blob([resp.body], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
         renderPDF(url);
     });
