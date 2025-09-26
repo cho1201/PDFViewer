@@ -1,6 +1,6 @@
 // ================= 구글 API 설정 =================
-const CLIENT_ID = '여기에_클라이언트_ID';
-const API_KEY = '여기에_API_KEY';
+const CLIENT_ID = '747899768010-bn6ja4bi7ku0gjeh5nb3q4b648drel30.apps.googleusercontent.com';
+const API_KEY = 'AIzaSyD6EFWkU_78a-yA19Gh99WkMtcla4rR9YI';
 const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
 const SCOPES = "https://www.googleapis.com/auth/drive.readonly";
 
@@ -73,3 +73,4 @@ function renderPDF(url) {
         });
     });
 }
+
