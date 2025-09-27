@@ -1,28 +1,29 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<title>Google Drive PDF 뷰어</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>구글 드라이브 PDF 뷰어</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="favicon.ico">
 </head>
 <body>
-
-<div id="controls">
+  <div id="controls">
     <button id="login-button">구글 계정 로그인</button>
     <h2>PDF 목록</h2>
     <ul id="file-list"></ul>
-</div>
+  </div>
 
-<div id="pdf-viewer">
+  <div id="pdf-viewer">
     <canvas id="pdf-canvas"></canvas>
-</div>
+  </div>
 
-<!-- Google API -->
-<script src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
-<!-- PDF.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<!-- Main JS -->
-<script src="script.js"></script>
+  <!-- ✅ script.js를 먼저 불러오기 -->
+  <script src="script.js"></script>
 
+  <!-- ✅ Google API -->
+  <script src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+
+  <!-- ✅ PDF.js (공식 CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </body>
 </html>
