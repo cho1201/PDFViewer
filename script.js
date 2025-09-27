@@ -5,82 +5,77 @@ const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/r
 const SCOPES = "https://www.googleapis.com/auth/drive.readonly";
 
 // ================= PDF.js 설정 =================
-const pdfjsLib = window['pdfjsLib'];
-pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
 // ================= DOM 요소 =================
-const loginButton = document.getElementById('login-button');
-const fileList = document.getElementById('file-list');
-const canvas = document.getElementById('pdf-canvas');
-const ctx = canvas.getContext('2d');
+const loginButton = document.getElementById("login-button");
+const fileList = document.getElementById("file-list");
+const canvas = document.getElementById("pdf-canvas");
+const ctx = canvas.getContext("2d");
 
-// Google API 로드 완료 후 버튼 연결
+// ✅ Google API 로드 후 실행할 함수
 function gapiLoaded() {
-    loginButton.onclick = () => gapi.load('client:auth2', initClient);
+  loginButton.onclick = () => gapi.load("client:auth2", initClient);
 }
 
-// ================= 구글 API 초기화 =================
 function initClient() {
-    gapi.client.init({
-        apiKey: API_KEY,
-        clientId: CLIENT_ID,
-        discoveryDocs: DISCOVERY_DOCS,
-        scope: SCOPES
-    }).then(() => {
-        const auth = gapi.auth2.getAuthInstance();
-        auth.isSignedIn.listen(updateSigninStatus);
-        updateSigninStatus(auth.isSignedIn.get());
-    });
-}
-
-function updateSigninStatus(isSignedIn) {
-    if (isSignedIn) {
-        listPDFs();
-    } else {
+  gapi.client
+    .init({
+      apiKey: API_KEY,
+      clientId: CLIENT_ID,
+      discoveryDocs: DISCOVERY_DOCS,
+      scope: SCOPES,
+    })
+    .then(() => {
+      if (!gapi.auth2.getAuthInstance().isSignedIn.get()) {
         gapi.auth2.getAuthInstance().signIn();
-    }
-}
-
-// ================= PDF 파일 목록 가져오기 =================
-function listPDFs() {
-    gapi.client.drive.files.list({
-        q: "mimeType='application/pdf'",
-        pageSize: 20,
-        fields: "files(id, name)"
-    }).then(response => {
-        const files = response.result.files;
-        fileList.innerHTML = '';
-        files.forEach(file => {
-            const li = document.createElement('li');
-            const btn = document.createElement('button');
-            btn.textContent = file.name;
-            btn.onclick = () => loadPDF(file.id);
-            li.appendChild(btn);
-            fileList.appendChild(li);
-        });
+      }
+      listPDFs();
     });
 }
 
-// ================= PDF 불러오기 및 렌더링 =================
+// PDF 파일 목록 가져오기
+function listPDFs() {
+  gapi.client.drive.files
+    .list({
+      q: "mimeType='application/pdf'",
+      pageSize: 20,
+      fields: "files(id, name)",
+    })
+    .then((response) => {
+      const files = response.result.files;
+      fileList.innerHTML = "";
+      files.forEach((file) => {
+        const li = document.createElement("li");
+        const btn = document.createElement("button");
+        btn.textContent = file.name;
+        btn.onclick = () => loadPDF(file.id);
+        li.appendChild(btn);
+        fileList.appendChild(li);
+      });
+    });
+}
+
+// PDF 불러오기 및 렌더링
 function loadPDF(fileId) {
-    gapi.client.drive.files.get({
-        fileId: fileId,
-        alt: 'media'
-    }).then(resp => {
-        const blob = new Blob([resp.body], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-        renderPDF(url);
+  gapi.client.drive.files
+    .get({ fileId: fileId, alt: "media" })
+    .then((resp) => {
+      const blob = new Blob([resp.body], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      renderPDF(url);
     });
 }
 
 function renderPDF(url) {
-    pdfjsLib.getDocument(url).promise.then(pdf => {
-        pdf.getPage(1).then(page => {
-            const viewport = page.getViewport({ scale: 1.5 });
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-            page.render({ canvasContext: ctx, viewport: viewport });
-        });
+  pdfjsLib.getDocument(url).promise.then((pdf) => {
+    pdf.getPage(1).then((page) => {
+      const viewport = page.getViewport({ scale: 1.5 });
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+      page.render({ canvasContext: ctx, viewport: viewport });
     });
+  });
 }
 
