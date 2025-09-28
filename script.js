@@ -53,7 +53,12 @@ function initializeApp() {
         configSection.classList.add('hidden');
         mainContent.classList.remove('hidden');
         
-        // Google API 클라이언트 초기화
+        // API 초기화 상태를 사용자에게 보여주기 위한 UI 처리
+        fileListContainer.classList.remove('hidden');
+        loadingFiles.classList.remove('hidden');
+        loadingFiles.querySelector('p').textContent = 'Google API를 초기화하는 중입니다...';
+        
+        // Google API 클라이언트 초기화 시작
         initializeApiClients();
     }
 }
@@ -69,6 +74,14 @@ function waitForPdfJs() {
 }
 
 function initializeApiClients() {
+    // Google의 외부 스크립트가 제대로 로드되었는지 확인
+    if (typeof gapi === 'undefined' || typeof google === 'undefined') {
+        const statusP = loadingFiles.querySelector('p');
+        statusP.textContent = '오류: Google API 스크립트를 로드하지 못했습니다. 인터넷 연결이나 광고 차단 확장 프로그램을 확인해주세요.';
+        statusP.classList.add('text-red-500');
+        return;
+    }
+
     // 1. GAPI Client 초기화 (Drive API용)
     gapi.load('client', async () => {
         try {
@@ -79,8 +92,10 @@ function initializeApiClients() {
             gapiInited = true;
             maybeEnableButtons();
         } catch (error) {
-            console.error('Error initializing GAPI client:', error);
-            alert('Google API 클라이언트를 초기화하는 데 실패했습니다. API 키가 올바른지 확인하세요.');
+            console.error('GAPI 클라이언트 초기화 오류:', error);
+            const statusP = loadingFiles.querySelector('p');
+            statusP.textContent = '오류: Google API 클라이언트 초기화에 실패했습니다. API 키가 올바른지 확인하세요.';
+            statusP.classList.add('text-red-500');
         }
     });
 
@@ -94,8 +109,10 @@ function initializeApiClients() {
         gisInited = true;
         maybeEnableButtons();
     } catch (error) {
-        console.error('Error initializing Google Sign-In client:', error);
-        alert('Google 인증 클라이언트를 초기화하는 데 실패했습니다. Client ID가 올바른지 확인하세요.');
+        console.error('GIS 클라이언트 초기화 오류:', error);
+        const statusP = loadingFiles.querySelector('p');
+        statusP.textContent = '오류: Google 인증 클라이언트 초기화에 실패했습니다. Client ID가 올바른지 확인하세요.';
+        statusP.classList.add('text-red-500');
     }
 }
 
@@ -108,10 +125,8 @@ saveConfigBtn.addEventListener('click', () => {
         return;
     }
 
-    API_KEY = apiKey;
-    CLIENT_ID = clientId;
-    localStorage.setItem('DRIVE_API_KEY', API_KEY);
-    localStorage.setItem('DRIVE_CLIENT_ID', CLIENT_ID);
+    localStorage.setItem('DRIVE_API_KEY', apiKey);
+    localStorage.setItem('DRIVE_CLIENT_ID', clientId);
     
     alert('설정이 저장되었습니다. 페이지를 새로고침합니다.');
     window.location.reload();
@@ -119,9 +134,11 @@ saveConfigBtn.addEventListener('click', () => {
 
 
 function maybeEnableButtons() {
-    // 두 클라이언트가 모두 준비되면 인증 버튼을 활성화합니다.
+    // 두 클라이언트가 모두 준비되면 인증 버튼을 활성화하고 다음 단계로 넘어갑니다.
     if (gapiInited && gisInited) {
-        authorizeButton.classList.remove('hidden');
+        loadingFiles.classList.add('hidden'); // 로딩 메시지 숨기기
+        fileListContainer.classList.add('hidden'); // 메시지를 담았던 컨테이너도 일단 숨기기
+        authorizeButton.classList.remove('hidden'); // 인증 버튼 표시
     }
 }
 
@@ -174,6 +191,10 @@ function updateSigninStatus(isSignedIn) {
 async function listPdfFiles() {
     fileList.innerHTML = '';
     loadingFiles.classList.remove('hidden');
+    loadingFiles.querySelector('p').textContent = '파일을 불러오는 중...'; // 로딩 메시지 재사용
+    loadingFiles.querySelector('p').classList.remove('text-red-500');
+
+
     try {
         const response = await gapi.client.drive.files.list({
             'pageSize': 50,
@@ -327,6 +348,5 @@ backToListBtn.addEventListener('click', () => {
 });
 
 // --- 스크립트 실행 시작 ---
-// 모든 함수가 정의된 후, 라이브러리 로드 상태를 확인하는 것으로 애플리케이션 실행을 시작합니다.
 waitForPdfJs();
 
