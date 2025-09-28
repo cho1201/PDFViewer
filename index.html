@@ -2,36 +2,26 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>Google Drive PDF 뷰어</title>
+  <title>구글 드라이브 PDF 뷰어</title>
   <link rel="stylesheet" href="style.css">
-  <!-- favicon 없으면 아래 줄을 지우거나 favicon.ico 파일을 루트에 올리세요 -->
-  <link rel="icon" href="favicon.ico">
 </head>
 <body>
-<div id="controls">
-  <h2>PDF 목록</h2>
-  <ul id="file-list"></ul>
-</div>
+  <div id="controls">
+    <button id="loginButton">Google Drive 로그인</button>
+    <h2>PDF 목록</h2>
+    <div id="pdfList"></div>
+  </div>
 
   <div id="pdf-viewer">
     <canvas id="pdf-canvas"></canvas>
   </div>
 
-  <!-- PDF.js 먼저 로드 -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-
-  <!-- gapiLoaded 전역 함수: Google API 로드가 끝나면 실행됨 -->
-  <script>
-    function gapiLoaded() {
-      if (window.gapiInit) {
-        window.gapiInit();
-      }
-    }
-  </script>
-  <script src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
-
-  <!-- 우리 코드 -->
+  <!-- Google API -->
+  <script async defer src="https://apis.google.com/js/api.js"
+    onload="gapiLoaded()"></script>
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <!-- 내 스크립트 -->
   <script src="script.js"></script>
 </body>
 </html>
-
