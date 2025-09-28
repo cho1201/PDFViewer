@@ -1,6 +1,3 @@
-// PDF.js 워커 스크립트 경로 설정
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://mozilla.github.io/pdf.js/build/pdf.js`;
-
 // --- 전역 변수 및 DOM 요소 ---
 let API_KEY = '';
 let CLIENT_ID = '';
@@ -44,6 +41,10 @@ const scale = 1.5;
 
 // window.onload를 사용하여 페이지의 모든 리소스(스크립트 포함)가 로드된 후 초기화 로직을 실행합니다.
 window.onload = function() {
+    // PDF.js 워커 스크립트 경로 설정
+    // 이 코드는 pdf.js 라이브러리가 로드된 후에 실행되어야 하므로 window.onload 내부에 위치합니다.
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://mozilla.github.io/pdf.js/build/pdf.js`;
+    
     API_KEY = localStorage.getItem('DRIVE_API_KEY');
     CLIENT_ID = localStorage.getItem('DRIVE_CLIENT_ID');
     
@@ -315,4 +316,5 @@ backToListBtn.addEventListener('click', () => {
     mainContent.classList.remove('hidden');
     pdfDoc = null; // 메모리 해제
 });
+
 
