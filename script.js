@@ -41,8 +41,8 @@ const scale = 1.5;
 
 // 애플리케이션의 메인 초기화 로직
 function initializeApp() {
-    // PDF.js 워커 스크립트 경로를 안정적인 CDN으로 변경
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.102/pdf.worker.min.js`;
+    // PDF.js 워커 스크립트 경로를 안정적인 최신 CDN으로 변경
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
     
     API_KEY = localStorage.getItem('DRIVE_API_KEY');
     CLIENT_ID = localStorage.getItem('DRIVE_CLIENT_ID');
