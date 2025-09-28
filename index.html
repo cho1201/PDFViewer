@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Google Drive PDF 뷰어</title>
   <link rel="stylesheet" href="style.css">
+  <!-- favicon 없으면 아래 줄을 지우거나 favicon.ico 파일을 루트에 올리세요 -->
   <link rel="icon" href="favicon.ico">
 </head>
 <body>
@@ -20,10 +21,17 @@
   <!-- PDF.js 먼저 로드 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
-  <!-- Google API -->
+  <!-- gapiLoaded 전역 함수: Google API 로드가 끝나면 실행됨 -->
+  <script>
+    function gapiLoaded() {
+      if (window.gapiInit) {
+        window.gapiInit();
+      }
+    }
+  </script>
   <script src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
 
-  <!-- script.js -->
+  <!-- 우리 코드 -->
   <script src="script.js"></script>
 </body>
 </html>
