@@ -42,6 +42,7 @@ const scale = 1.5;
 
 // --- 설정 및 초기화 ---
 
+// window.onload를 사용하여 페이지의 모든 리소스(스크립트 포함)가 로드된 후 초기화 로직을 실행합니다.
 window.onload = function() {
     API_KEY = localStorage.getItem('DRIVE_API_KEY');
     CLIENT_ID = localStorage.getItem('DRIVE_CLIENT_ID');
@@ -51,8 +52,42 @@ window.onload = function() {
         clientIdInput.value = CLIENT_ID;
         configSection.classList.add('hidden');
         mainContent.classList.remove('hidden');
+        
+        // Google API 클라이언트 초기화
+        initializeApiClients();
     }
 };
+
+function initializeApiClients() {
+    // 1. GAPI Client 초기화 (Drive API용)
+    gapi.load('client', async () => {
+        try {
+            await gapi.client.init({
+                apiKey: API_KEY,
+                discoveryDocs: DISCOVERY_DOCS,
+            });
+            gapiInited = true;
+            maybeEnableButtons();
+        } catch (error) {
+            console.error('Error initializing GAPI client:', error);
+            alert('Google API 클라이언트를 초기화하는 데 실패했습니다. API 키가 올바른지 확인하세요.');
+        }
+    });
+
+    // 2. GIS Client 초기화 (인증용)
+    try {
+        tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: CLIENT_ID,
+            scope: SCOPES,
+            callback: '', // 콜백은 인증 시점에 동적으로 할당됩니다.
+        });
+        gisInited = true;
+        maybeEnableButtons();
+    } catch (error) {
+        console.error('Error initializing Google Sign-In client:', error);
+        alert('Google 인증 클라이언트를 초기화하는 데 실패했습니다. Client ID가 올바른지 확인하세요.');
+    }
+}
 
 saveConfigBtn.addEventListener('click', () => {
     const apiKey = apiKeyInput.value.trim();
@@ -72,32 +107,9 @@ saveConfigBtn.addEventListener('click', () => {
     window.location.reload();
 });
 
-function gapiLoaded() {
-    gapi.load('client', initializeGapiClient);
-}
-
-async function initializeGapiClient() {
-    if (!API_KEY) return;
-    await gapi.client.init({
-        apiKey: API_KEY,
-        discoveryDocs: DISCOVERY_DOCS,
-    });
-    gapiInited = true;
-    maybeEnableButtons();
-}
-
-function gisLoaded() {
-    if (!CLIENT_ID) return;
-    tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        scope: SCOPES,
-        callback: '',
-    });
-    gisInited = true;
-    maybeEnableButtons();
-}
 
 function maybeEnableButtons() {
+    // 두 클라이언트가 모두 준비되면 인증 버튼을 활성화합니다.
     if (gapiInited && gisInited) {
         authorizeButton.classList.remove('hidden');
     }
@@ -206,7 +218,7 @@ async function loadPdf(fileId, fileName) {
         });
 
         if (!response.ok) {
-            throw new Error('PDF 다운로드에 실패했습니다.');
+            throw new Error(`PDF 다운로드에 실패했습니다. (상태: ${response.status})`);
         }
 
         const reader = response.body.getReader();
@@ -219,10 +231,12 @@ async function loadPdf(fileId, fileName) {
             if (done) break;
             chunks.push(value);
             receivedLength += value.length;
-            progressBar.style.width = `${(receivedLength / contentLength) * 100}%`;
+            if(contentLength) {
+                progressBar.style.width = `${(receivedLength / contentLength) * 100}%`;
+            }
         }
 
-        let chunksAll = new Uint8Array(receivedLength);
+        let chunksAll = new UintArray(receivedLength);
         let position = 0;
         for(let chunk of chunks) {
             chunksAll.set(chunk, position);
@@ -301,3 +315,4 @@ backToListBtn.addEventListener('click', () => {
     mainContent.classList.remove('hidden');
     pdfDoc = null; // 메모리 해제
 });
+
