@@ -1,211 +1,303 @@
-// ================= 경고: 중요 보안 정보 =================
-// 실제 서비스에서는 클라이언트 측 코드에 API 키와 클라이언트 ID를 절대 노출해서는 안 됩니다.
-const CLIENT_ID = "747899768010-bn6ja4bi7ku0gjeh5nb3q4b648drel30.apps.googleusercontent.com";
-const API_KEY = "AIzaSyD6EFWkU_78a-yA19Gh99WkMtcla4rR9YI";
-// =======================================================
+// PDF.js 워커 스크립트 경로 설정
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://mozilla.github.io/pdf.js/build/pdf.js`;
 
+// --- 전역 변수 및 DOM 요소 ---
+let API_KEY = '';
+let CLIENT_ID = '';
 const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
-const SCOPES = "https://www.googleapis.com/auth/drive.readonly";
+const SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
 
-// ================= PDF.js 설정 =================
-pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
-
-// ================= 애플리케이션 상태 변수 =================
 let tokenClient;
+let gapiInited = false;
+let gisInited = false;
+
+// DOM 요소
+const configSection = document.getElementById('config-section');
+const mainContent = document.getElementById('main-content');
+const saveConfigBtn = document.getElementById('save-config');
+const apiKeyInput = document.getElementById('api-key');
+const clientIdInput = document.getElementById('client-id');
+const authorizeButton = document.getElementById('authorize_button');
+const signoutButton = document.getElementById('signout_button');
+const fileListContainer = document.getElementById('file-list-container');
+const fileList = document.getElementById('file-list');
+const viewerContainer = document.getElementById('viewer-container');
+const pdfTitle = document.getElementById('pdf-title');
+const pdfViewer = document.getElementById('pdf-viewer');
+const backToListBtn = document.getElementById('back-to-list');
+const loadingFiles = document.getElementById('loading-files');
+const loadingPdf = document.getElementById('loading-pdf');
+const progressBar = document.getElementById('progress-bar');
+const prevPageBtn = document.getElementById('prev-page');
+const nextPageBtn = document.getElementById('next-page');
+const pageNumSpan = document.getElementById('page-num');
+const pageCountSpan = document.getElementById('page-count');
+
+// PDF 뷰어 관련 상태 변수
 let pdfDoc = null;
-let currentPageNum = 1;
+let pageNum = 1;
+let pageRendering = false;
+let pageNumPending = null;
+const scale = 1.5;
 
-// ================= DOM 요소 =================
-const gsiContainer = document.getElementById("gsi-container");
-const signOutButton = document.getElementById("signout-button");
-const pdfListTitle = document.getElementById("pdf-list-title");
-const pdfListDiv = document.getElementById("pdfList");
-const loader = document.getElementById("loader");
-const pdfNav = document.getElementById("pdf-navigation");
-const pageNumSpan = document.getElementById("page-num");
-const pageCountSpan = document.getElementById("page-count");
-const prevPageButton = document.getElementById("prev-page");
-const nextPageButton = document.getElementById("next-page");
-const pdfCanvas = document.getElementById("pdf-canvas");
+// --- 설정 및 초기화 ---
 
-// ================= 구글 API 로더 =================
+window.onload = function() {
+    API_KEY = localStorage.getItem('DRIVE_API_KEY');
+    CLIENT_ID = localStorage.getItem('DRIVE_CLIENT_ID');
+    
+    if (API_KEY && CLIENT_ID) {
+        apiKeyInput.value = API_KEY;
+        clientIdInput.value = CLIENT_ID;
+        configSection.classList.add('hidden');
+        mainContent.classList.remove('hidden');
+    }
+};
 
-// 1. GAPI 클라이언트 로드
+saveConfigBtn.addEventListener('click', () => {
+    const apiKey = apiKeyInput.value.trim();
+    const clientId = clientIdInput.value.trim();
+
+    if (!apiKey || !clientId) {
+        alert('API 키와 클라이언트 ID를 모두 입력해주세요.');
+        return;
+    }
+
+    API_KEY = apiKey;
+    CLIENT_ID = clientId;
+    localStorage.setItem('DRIVE_API_KEY', API_KEY);
+    localStorage.setItem('DRIVE_CLIENT_ID', CLIENT_ID);
+    
+    alert('설정이 저장되었습니다. 페이지를 새로고침합니다.');
+    window.location.reload();
+});
+
 function gapiLoaded() {
-  gapi.load('client', initializeGapiClient);
+    gapi.load('client', initializeGapiClient);
 }
 
-// 2. GAPI 클라이언트 초기화 (Drive API 사용 준비)
 async function initializeGapiClient() {
-  await gapi.client.init({
-    apiKey: API_KEY,
-    discoveryDocs: DISCOVERY_DOCS,
-  });
+    if (!API_KEY) return;
+    await gapi.client.init({
+        apiKey: API_KEY,
+        discoveryDocs: DISCOVERY_DOCS,
+    });
+    gapiInited = true;
+    maybeEnableButtons();
 }
 
-// 3. GIS 클라이언트 로드
 function gisLoaded() {
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: CLIENT_ID,
-    scope: SCOPES,
-    callback: gisCallback, // 인증 성공 시 호출될 콜백 함수
-  });
-  
-  // 로그인 버튼 렌더링
-  google.accounts.id.initialize({
-    client_id: CLIENT_ID,
-    callback: () => {} // 로그인 버튼은 토큰 요청 용도로만 사용
-  });
-  google.accounts.id.renderButton(
-    gsiContainer,
-    { theme: "outline", size: "large", text: "signin_with", width: "220" }
-  );
-  google.accounts.id.prompt(); // 페이지 로드 시 자동 로그인 프롬프트 표시
+    if (!CLIENT_ID) return;
+    tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: '',
+    });
+    gisInited = true;
+    maybeEnableButtons();
 }
 
-// ================= 인증 및 데이터 처리 =================
-
-// 4. 인증 성공 후 콜백 함수
-function gisCallback(tokenResponse) {
-  if (tokenResponse && tokenResponse.access_token) {
-    gapi.client.setToken(tokenResponse); // GAPI 클라이언트에 액세스 토큰 설정
-    updateSigninStatus(true);
-    listPDFs();
-  } else {
-    console.error("GIS 콜백에서 유효한 토큰을 받지 못했습니다.");
-    updateSigninStatus(false);
-  }
+function maybeEnableButtons() {
+    if (gapiInited && gisInited) {
+        authorizeButton.classList.remove('hidden');
+    }
 }
 
-// 로그인 버튼 대신 토큰 클라이언트 사용
+// --- 인증 관련 ---
+
+authorizeButton.onclick = handleAuthClick;
+signoutButton.onclick = handleSignoutClick;
+
 function handleAuthClick() {
-  tokenClient.requestAccessToken({ prompt: 'consent' });
+    tokenClient.callback = async (resp) => {
+        if (resp.error !== undefined) {
+            throw (resp);
+        }
+        updateSigninStatus(true);
+    };
+
+    if (gapi.client.getToken() === null) {
+        tokenClient.requestAccessToken({prompt: 'consent'});
+    } else {
+        tokenClient.requestAccessToken({prompt: ''});
+    }
 }
 
-// 로그아웃 처리
-function handleSignOutClick() {
-    gapi.client.setToken(null);
-    updateSigninStatus(false);
+function handleSignoutClick() {
+    const token = gapi.client.getToken();
+    if (token !== null) {
+        google.accounts.oauth2.revoke(token.access_token);
+        gapi.client.setToken('');
+        updateSigninStatus(false);
+    }
 }
 
 function updateSigninStatus(isSignedIn) {
-  if (isSignedIn) {
-    gsiContainer.style.display = 'none';
-    signOutButton.style.display = 'block';
-    pdfListTitle.style.display = 'block';
-  } else {
-    gsiContainer.style.display = 'block';
-    signOutButton.style.display = 'none';
-    pdfListTitle.style.display = 'none';
-    pdfListDiv.innerHTML = '';
-    clearPdfViewer();
-  }
+    if (isSignedIn) {
+        authorizeButton.classList.add('hidden');
+        signoutButton.classList.remove('hidden');
+        fileListContainer.classList.remove('hidden');
+        listPdfFiles();
+    } else {
+        authorizeButton.classList.remove('hidden');
+        signoutButton.classList.add('hidden');
+        fileListContainer.classList.add('hidden');
+        viewerContainer.classList.add('hidden');
+        fileList.innerHTML = '';
+    }
 }
 
-signOutButton.onclick = handleSignOutClick;
+// --- Google Drive API ---
 
-// ================= PDF 파일 목록 불러오기 =================
-function listPDFs() {
-  gapi.client.drive.files
-    .list({
-      q: "mimeType='application/pdf'",
-      pageSize: 20,
-      fields: "files(id, name)",
-      orderBy: "modifiedTime desc",
-    })
-    .then(response => {
-      const files = response.result.files;
-      pdfListDiv.innerHTML = "";
-
-      if (files && files.length > 0) {
-        files.forEach(file => {
-          const a = document.createElement("a");
-          a.textContent = file.name;
-          a.href = "#";
-          a.onclick = e => {
-            e.preventDefault();
-            loadPDF(file.id);
-          };
-          pdfListDiv.appendChild(a);
+async function listPdfFiles() {
+    fileList.innerHTML = '';
+    loadingFiles.classList.remove('hidden');
+    try {
+        const response = await gapi.client.drive.files.list({
+            'pageSize': 50,
+            'fields': 'nextPageToken, files(id, name, iconLink)',
+            'q': "mimeType='application/pdf' and trashed=false",
+            'orderBy': 'modifiedTime desc'
         });
-      } else {
-        pdfListDiv.textContent = "PDF 파일이 없습니다.";
-      }
-    })
-    .catch(error => {
-      console.error("PDF 목록 로드 오류:", error);
-      pdfListDiv.textContent = "파일 목록을 불러오는 데 실패했습니다.";
-    });
+        
+        loadingFiles.classList.add('hidden');
+        const files = response.result.files;
+        if (files && files.length > 0) {
+            files.forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item flex items-center p-3 my-1 cursor-pointer rounded-md transition duration-200';
+                fileItem.onclick = () => loadPdf(file.id, file.name);
+                
+                const img = document.createElement('img');
+                img.src = file.iconLink;
+                img.className = 'w-6 h-6 mr-3';
+                fileItem.appendChild(img);
+
+                const span = document.createElement('span');
+                span.textContent = file.name;
+                fileItem.appendChild(span);
+                fileList.appendChild(fileItem);
+            });
+        } else {
+            fileList.innerHTML = '<p class="text-gray-500">PDF 파일을 찾을 수 없습니다.</p>';
+        }
+    } catch (err) {
+        loadingFiles.classList.add('hidden');
+        fileList.innerHTML = `<p class="text-red-500">파일을 불러오는 중 오류가 발생했습니다: ${err.message}</p>`;
+        console.error(err);
+    }
 }
 
-// ================= PDF 로드 및 표시 (이하 코드는 이전과 동일) =================
-function loadPDF(fileId) {
-  clearPdfViewer();
-  loader.style.display = "block";
+// --- PDF 뷰어 ---
 
-  gapi.client.drive.files
-    .get({ fileId: fileId, alt: "media" })
-    .then(response => {
-      const blob = new Blob([response.body], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      renderPDF(url);
-    })
-    .catch(error => {
-      console.error("PDF 파일 다운로드 오류:", error);
-      alert("PDF 파일을 불러오는 데 실패했습니다.");
-      loader.style.display = "none";
-    });
-}
+async function loadPdf(fileId, fileName) {
+    mainContent.classList.add('hidden');
+    viewerContainer.classList.remove('hidden');
+    loadingPdf.classList.remove('hidden');
+    pdfViewer.innerHTML = '';
+    pdfTitle.textContent = fileName;
+    progressBar.style.width = '0%';
 
-function renderPDF(url) {
-  pdfjsLib.getDocument(url).promise.then(pdf => {
-    pdfDoc = pdf;
-    pageCountSpan.textContent = pdfDoc.numPages;
-    currentPageNum = 1;
-    renderPage(currentPageNum);
-    pdfNav.style.visibility = "visible";
-  }).catch(error => {
-    console.error("PDF 렌더링 오류:", error);
-    alert("PDF를 표시하는 데 실패했습니다. 파일이 손상되었을 수 있습니다.");
-    clearPdfViewer();
-  }).finally(() => {
-      loader.style.display = "none";
-  });
+    try {
+        const accessToken = gapi.client.getToken().access_token;
+        const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+
+        if (!response.ok) {
+            throw new Error('PDF 다운로드에 실패했습니다.');
+        }
+
+        const reader = response.body.getReader();
+        const contentLength = +response.headers.get('Content-Length');
+        let receivedLength = 0;
+        let chunks = [];
+
+        while(true) {
+            const {done, value} = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            receivedLength += value.length;
+            progressBar.style.width = `${(receivedLength / contentLength) * 100}%`;
+        }
+
+        let chunksAll = new Uint8Array(receivedLength);
+        let position = 0;
+        for(let chunk of chunks) {
+            chunksAll.set(chunk, position);
+            position += chunk.length;
+        }
+
+        const pdfData = chunksAll.buffer;
+        
+        pdfDoc = await pdfjsLib.getDocument({ data: pdfData }).promise;
+        pageCountSpan.textContent = pdfDoc.numPages;
+        pageNum = 1;
+        renderPage(pageNum);
+        
+    } catch (err) {
+        pdfViewer.innerHTML = `<p class="text-red-500">PDF를 불러오는 중 오류가 발생했습니다: ${err.message}</p>`;
+        console.error(err);
+    } finally {
+        loadingPdf.classList.add('hidden');
+    }
 }
 
 function renderPage(num) {
-  const ctx = pdfCanvas.getContext("2d");
+    pageRendering = true;
+    pdfDoc.getPage(num).then((page) => {
+        const viewport = page.getViewport({ scale: scale });
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
 
-  pdfDoc.getPage(num).then(page => {
-    const viewport = page.getViewport({ scale: 1.5 });
-    pdfCanvas.height = viewport.height;
-    pdfCanvas.width = viewport.width;
+        const renderContext = {
+            canvasContext: ctx,
+            viewport: viewport
+        };
+        const renderTask = page.render(renderContext);
 
-    page.render({
-      canvasContext: ctx,
-      viewport: viewport,
+        renderTask.promise.then(() => {
+            pageRendering = false;
+            if (pageNumPending !== null) {
+                renderPage(pageNumPending);
+                pageNumPending = null;
+            }
+            pdfViewer.innerHTML = '';
+            pdfViewer.appendChild(canvas);
+        });
     });
+
     pageNumSpan.textContent = num;
-  });
 }
 
-function clearPdfViewer() {
-    pdfDoc = null;
-    const ctx = pdfCanvas.getContext('2d');
-    ctx.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
-    pdfNav.style.visibility = "hidden";
-    pageNumSpan.textContent = 0;
-    pageCountSpan.textContent = 0;
+function queueRenderPage(num) {
+    if (pageRendering) {
+        pageNumPending = num;
+    } else {
+        renderPage(num);
+    }
 }
 
-prevPageButton.addEventListener("click", () => {
-  if (!pdfDoc || currentPageNum <= 1) return;
-  currentPageNum--;
-  renderPage(currentPageNum);
-});
+function onPrevPage() {
+    if (pageNum <= 1) return;
+    pageNum--;
+    queueRenderPage(pageNum);
+}
 
-nextPageButton.addEventListener("click", () => {
-  if (!pdfDoc || currentPageNum >= pdfDoc.numPages) return;
-  currentPageNum++;
-  renderPage(currentPageNum);
+function onNextPage() {
+    if (pageNum >= pdfDoc.numPages) return;
+    pageNum++;
+    queueRenderPage(pageNum);
+}
+
+prevPageBtn.addEventListener('click', onPrevPage);
+nextPageBtn.addEventListener('click', onNextPage);
+
+backToListBtn.addEventListener('click', () => {
+    viewerContainer.classList.add('hidden');
+    mainContent.classList.remove('hidden');
+    pdfDoc = null; // 메모리 해제
 });
