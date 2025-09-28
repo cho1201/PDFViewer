@@ -39,10 +39,9 @@ const scale = 1.5;
 
 // --- 설정 및 초기화 ---
 
-// window.onload를 사용하여 페이지의 모든 리소스(스크립트 포함)가 로드된 후 초기화 로직을 실행합니다.
-window.onload = function() {
+// 애플리케이션의 메인 초기화 로직
+function initializeApp() {
     // PDF.js 워커 스크립트 경로 설정
-    // 이 코드는 pdf.js 라이브러리가 로드된 후에 실행되어야 하므로 window.onload 내부에 위치합니다.
     pdfjsLib.GlobalWorkerOptions.workerSrc = `https://mozilla.github.io/pdf.js/build/pdf.js`;
     
     API_KEY = localStorage.getItem('DRIVE_API_KEY');
@@ -57,7 +56,24 @@ window.onload = function() {
         // Google API 클라이언트 초기화
         initializeApiClients();
     }
+}
+
+// pdf.js 라이브러리가 로드될 때까지 기다리는 함수
+function waitForPdfJs() {
+    if (typeof pdfjsLib !== 'undefined' && pdfjsLib.GlobalWorkerOptions) {
+        initializeApp();
+    } else {
+        // 100ms 간격으로 라이브러리가 로드되었는지 다시 확인합니다.
+        setTimeout(waitForPdfJs, 100);
+    }
+}
+
+// window.onload는 페이지의 모든 리소스(이미지, 스크립트 등)가 로드된 후 발생합니다.
+// 이 시점에서 pdf.js 라이브러리 로드를 확인하기 시작합니다.
+window.onload = function() {
+    waitForPdfJs();
 };
+
 
 function initializeApiClients() {
     // 1. GAPI Client 초기화 (Drive API용)
@@ -316,5 +332,4 @@ backToListBtn.addEventListener('click', () => {
     mainContent.classList.remove('hidden');
     pdfDoc = null; // 메모리 해제
 });
-
 
