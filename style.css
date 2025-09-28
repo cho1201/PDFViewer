@@ -1,75 +1,14 @@
-body {
-  display: flex;
-  font-family: Arial, sans-serif;
-  margin: 0;
-  height: 100vh;
+/* 뷰어 내부의 캔버스 스타일 */
+#pdf-viewer canvas {
+    border: 1px solid #ccc;
+    direction: ltr; /* PDF 렌더링 방향 */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    margin: auto;
+    max-width: 100%; /* 모바일 화면에서 잘리지 않도록 */
+    height: auto; /* 비율 유지 */
 }
 
-#controls {
-  width: 250px;
-  padding: 15px;
-  border-right: 1px solid #ccc;
-  background: #f9f9f9;
-  overflow-y: auto; /* 파일 목록이 길어지면 스크롤 */
+/* 파일 목록의 각 아이템 스타일 */
+.file-item:hover {
+    background-color: #f0f4f8; /* 마우스를 올렸을 때 배경색 변경 */
 }
-
-#controls h2 {
-  margin-top: 20px;
-}
-
-#authButton, #signout-button {
-  width: 100%;
-  padding: 10px;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-#pdfList a {
-  display: block;
-  padding: 8px;
-  text-decoration: none;
-  color: #007bff;
-  border-radius: 4px;
-}
-
-#pdfList a:hover {
-  background-color: #e9ecef;
-}
-
-#viewer-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
-  overflow-y: auto;
-}
-
-#loader {
-  font-size: 1.2em;
-  margin-top: 50px;
-}
-
-#pdf-viewer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-#pdf-navigation {
-  margin-bottom: 15px;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-#pdf-navigation button {
-  padding: 5px 10px;
-  cursor: pointer;
-}
-
-canvas {
-  border: 1px solid #000;
-  max-width: 100%;
-}
-
