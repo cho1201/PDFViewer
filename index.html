@@ -7,21 +7,28 @@
 </head>
 <body>
   <div id="controls">
-    <button id="loginButton">Google Drive 로그인</button>
+    <button id="authButton">Google Drive 로그인</button>
     <h2>PDF 목록</h2>
     <div id="pdfList"></div>
   </div>
 
-  <div id="pdf-viewer">
-    <canvas id="pdf-canvas"></canvas>
+  <div id="viewer-container">
+    <div id="loader" style="display: none;">PDF 로딩 중...</div>
+    <div id="pdf-viewer">
+      <div id="pdf-navigation">
+        <button id="prev-page">이전 페이지</button>
+        <span>
+          <span id="page-num">0</span> / <span id="page-count">0</span>
+        </span>
+        <button id="next-page">다음 페이지</button>
+      </div>
+      <canvas id="pdf-canvas"></canvas>
+    </div>
   </div>
 
-  <!-- Google API -->
   <script async defer src="https://apis.google.com/js/api.js"
     onload="gapiLoaded()"></script>
-  <!-- PDF.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-  <!-- 내 스크립트 -->
   <script src="script.js"></script>
 </body>
 </html>
