@@ -2,33 +2,70 @@ body {
   display: flex;
   font-family: Arial, sans-serif;
   margin: 0;
+  height: 100vh;
 }
 
 #controls {
-  width: 200px;
-  padding: 10px;
+  width: 250px;
+  padding: 15px;
   border-right: 1px solid #ccc;
   background: #f9f9f9;
+  overflow-y: auto; /* 파일 목록이 길어지면 스크롤 */
 }
 
-#file-list {
-  list-style: none;
-  padding: 0;
+#controls h2 {
+  margin-top: 20px;
 }
 
-#file-list li {
-  margin-bottom: 10px;
-}
-
-#file-list button {
+#authButton {
   width: 100%;
-  padding: 5px;
+  padding: 10px;
+  font-size: 16px;
   cursor: pointer;
 }
 
-#pdf-viewer {
+#pdfList a {
+  display: block;
+  padding: 8px;
+  text-decoration: none;
+  color: #007bff;
+  border-radius: 4px;
+}
+
+#pdfList a:hover {
+  background-color: #e9ecef;
+}
+
+#viewer-container {
   flex: 1;
-  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+#loader {
+  font-size: 1.2em;
+  margin-top: 50px;
+}
+
+#pdf-viewer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#pdf-navigation {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+#pdf-navigation button {
+  padding: 5px 10px;
+  cursor: pointer;
 }
 
 canvas {
