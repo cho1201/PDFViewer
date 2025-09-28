@@ -1,6 +1,6 @@
 // --- 전역 변수 및 DOM 요소 ---
 let API_KEY = 'AIzaSyD6EFWkU_78a-yA19Gh99WkMtcla4rR9YI';
-let CLIENT_ID = '747899768010-bn6ja4bi7ku0gjeh5nb3q4b648drel30.apps.googleusercontent.com';
+let CLIENT_ID = '747899768010-pkrmlqk35ee0us26ppr3ckhfkam8tfgi.apps.googleusercontent.com';
 const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
 const SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
 
@@ -353,5 +353,6 @@ backToListBtn.addEventListener('click', () => {
 
 // --- 스크립트 실행 시작 ---
 waitForPdfJs();
+
 
 
