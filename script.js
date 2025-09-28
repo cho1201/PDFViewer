@@ -10,13 +10,11 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 
 // ================= gapiInit 정의 =================
 window.gapiInit = function () {
-  const loginButton = document.getElementById("login-button");
   const fileList = document.getElementById("file-list");
   const canvas = document.getElementById("pdf-canvas");
   const ctx = canvas.getContext("2d");
 
-  // 로그인 버튼 클릭 시 실행
-  loginButton.onclick = () => gapi.load("client:auth2", initClient);
+  gapi.load("client:auth2", initClient);
 
   function initClient() {
     gapi.client.init({
@@ -25,18 +23,8 @@ window.gapiInit = function () {
       discoveryDocs: DISCOVERY_DOCS,
       scope: SCOPES,
     }).then(() => {
-      const auth = gapi.auth2.getAuthInstance();
-      auth.isSignedIn.listen(updateSigninStatus);
-      updateSigninStatus(auth.isSignedIn.get());
+      listPDFs(); // 바로 실행
     });
-  }
-
-  function updateSigninStatus(isSignedIn) {
-    if (isSignedIn) {
-      listPDFs();
-    } else {
-      gapi.auth2.getAuthInstance().signIn();
-    }
   }
 
   // Google Drive에서 PDF 목록 불러오기
@@ -59,7 +47,6 @@ window.gapiInit = function () {
     });
   }
 
-  // 선택한 PDF 불러오기
   function loadPDF(fileId) {
     gapi.client.drive.files.get({ fileId: fileId, alt: "media" }).then((resp) => {
       const blob = new Blob([resp.body], { type: "application/pdf" });
@@ -68,7 +55,6 @@ window.gapiInit = function () {
     });
   }
 
-  // PDF.js로 첫 페이지 렌더링
   function renderPDF(url) {
     pdfjsLib.getDocument(url).promise.then((pdf) => {
       pdf.getPage(1).then((page) => {
