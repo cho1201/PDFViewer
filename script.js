@@ -68,13 +68,6 @@ function waitForPdfJs() {
     }
 }
 
-// window.onload는 페이지의 모든 리소스(이미지, 스크립트 등)가 로드된 후 발생합니다.
-// 이 시점에서 pdf.js 라이브러리 로드를 확인하기 시작합니다.
-window.onload = function() {
-    waitForPdfJs();
-};
-
-
 function initializeApiClients() {
     // 1. GAPI Client 초기화 (Drive API용)
     gapi.load('client', async () => {
@@ -332,4 +325,8 @@ backToListBtn.addEventListener('click', () => {
     mainContent.classList.remove('hidden');
     pdfDoc = null; // 메모리 해제
 });
+
+// --- 스크립트 실행 시작 ---
+// 모든 함수가 정의된 후, 라이브러리 로드 상태를 확인하는 것으로 애플리케이션 실행을 시작합니다.
+waitForPdfJs();
 
