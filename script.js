@@ -94,7 +94,9 @@ function initializeApiClients() {
         } catch (error) {
             console.error('GAPI 클라이언트 초기화 오류:', error);
             const statusP = loadingFiles.querySelector('p');
-            statusP.textContent = '오류: Google API 클라이언트 초기화에 실패했습니다. API 키가 올바른지 확인하세요.';
+            // Google에서 받은 상세 오류 메시지를 함께 표시
+            const details = error.details ? ` (${error.details})` : '';
+            statusP.textContent = `오류: Google API 클라이언트 초기화에 실패했습니다. API 키를 확인하세요.${details}`;
             statusP.classList.add('text-red-500');
         }
     });
@@ -111,7 +113,9 @@ function initializeApiClients() {
     } catch (error) {
         console.error('GIS 클라이언트 초기화 오류:', error);
         const statusP = loadingFiles.querySelector('p');
-        statusP.textContent = '오류: Google 인증 클라이언트 초기화에 실패했습니다. Client ID가 올바른지 확인하세요.';
+        // Google에서 받은 상세 오류 메시지를 함께 표시
+        const details = error.details ? ` (${error.details})` : '';
+        statusP.textContent = `오류: Google 인증 클라이언트 초기화에 실패했습니다. Client ID를 확인하세요.${details}`;
         statusP.classList.add('text-red-500');
     }
 }
