@@ -7,8 +7,10 @@
 </head>
 <body>
   <div id="controls">
-    <button id="authButton">Google Drive 로그인</button>
-    <h2>PDF 목록</h2>
+    <div id="gsi-container"></div>
+    <button id="signout-button" style="display: none;">로그아웃</button>
+
+    <h2 id="pdf-list-title" style="display: none;">PDF 목록</h2>
     <div id="pdfList"></div>
   </div>
 
@@ -28,8 +30,9 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   
-  <script src="script.js"></script>
+  <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+  <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 
-  <script async src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+  <script src="script.js"></script>
 </body>
 </html>
