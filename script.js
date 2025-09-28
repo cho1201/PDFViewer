@@ -5,64 +5,90 @@ const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/r
 const SCOPES = "https://www.googleapis.com/auth/drive.readonly";
 
 // ================= PDF.js 설정 =================
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
 
-// ================= gapiInit 정의 =================
-window.gapiInit = function () {
-  const fileList = document.getElementById("file-list");
-  const canvas = document.getElementById("pdf-canvas");
-  const ctx = canvas.getContext("2d");
-
+// ================= 구글 API 초기화 =================
+function gapiLoaded() {
   gapi.load("client:auth2", initClient);
+}
 
-  function initClient() {
-    gapi.client.init({
+function initClient() {
+  gapi.client
+    .init({
       apiKey: API_KEY,
       clientId: CLIENT_ID,
       discoveryDocs: DISCOVERY_DOCS,
       scope: SCOPES,
-    }).then(() => {
-      listPDFs(); // 바로 실행
-    });
-  }
+    })
+    .then(() => {
+      const authInstance = gapi.auth2.getAuthInstance();
+      const loginButton = document.getElementById("loginButton");
 
-  // Google Drive에서 PDF 목록 불러오기
-  function listPDFs() {
-    gapi.client.drive.files.list({
+      loginButton.onclick = () => {
+        authInstance.signIn().then(listPDFs);
+      };
+    });
+}
+
+// ================= PDF 파일 목록 불러오기 =================
+function listPDFs() {
+  gapi.client.drive.files
+    .list({
       q: "mimeType='application/pdf'",
       pageSize: 20,
       fields: "files(id, name)",
-    }).then((response) => {
+    })
+    .then((response) => {
       const files = response.result.files;
-      fileList.innerHTML = "";
-      files.forEach((file) => {
-        const li = document.createElement("li");
-        const btn = document.createElement("button");
-        btn.textContent = file.name;
-        btn.onclick = () => loadPDF(file.id);
-        li.appendChild(btn);
-        fileList.appendChild(li);
-      });
-    });
-  }
+      const listDiv = document.getElementById("pdfList");
+      listDiv.innerHTML = "";
 
-  function loadPDF(fileId) {
-    gapi.client.drive.files.get({ fileId: fileId, alt: "media" }).then((resp) => {
-      const blob = new Blob([resp.body], { type: "application/pdf" });
+      if (files && files.length > 0) {
+        files.forEach((file) => {
+          const a = document.createElement("a");
+          a.textContent = file.name;
+          a.href = "#";
+          a.onclick = (e) => {
+            e.preventDefault();
+            loadPDF(file.id);
+          };
+          listDiv.appendChild(a);
+        });
+      } else {
+        listDiv.textContent = "PDF 파일이 없습니다.";
+      }
+    });
+}
+
+// ================= PDF 로드 및 표시 =================
+function loadPDF(fileId) {
+  gapi.client.drive.files
+    .get({
+      fileId: fileId,
+      alt: "media",
+    })
+    .then((response) => {
+      const blob = new Blob([response.body], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       renderPDF(url);
     });
-  }
+}
 
-  function renderPDF(url) {
-    pdfjsLib.getDocument(url).promise.then((pdf) => {
-      pdf.getPage(1).then((page) => {
-        const viewport = page.getViewport({ scale: 1.5 });
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-        page.render({ canvasContext: ctx, viewport: viewport });
-      });
+function renderPDF(url) {
+  const canvas = document.getElementById("pdf-canvas");
+  const ctx = canvas.getContext("2d");
+
+  pdfjsLib.getDocument(url).promise.then((pdf) => {
+    pdf.getPage(1).then((page) => {
+      const viewport = page.getViewport({ scale: 1.5 });
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+
+      const renderContext = {
+        canvasContext: ctx,
+        viewport: viewport,
+      };
+      page.render(renderContext);
     });
-  }
-};
+  });
+}
