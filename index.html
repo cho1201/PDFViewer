@@ -75,7 +75,7 @@ function queueRenderPage(num,direction=null){
   if(num>=1 && num<=pdfDoc.numPages){ currentPage=num; renderPage(num,direction); }
 }
 
-// === 로컬 파일 이벤트 ===
+// === 로컬 PDF 업로드 ===
 $('#file-input').on('change', e=>{
   const file = e.target.files[0];
   if(file && file.type==='application/pdf'){
@@ -93,7 +93,7 @@ $('#file-input').on('change', e=>{
   }
 });
 
-// === UI 버튼 이벤트 ===
+// === UI 버튼 ===
 $('#prev-page').click(()=>{ if(currentPage>1) queueRenderPage(currentPage-1,'prev'); });
 $('#next-page').click(()=>{ if(currentPage<pdfDoc.numPages) queueRenderPage(currentPage+1,'next'); });
 $('#zoom-in').click(()=>{ scale+=0.2; renderPage(currentPage); });
@@ -113,9 +113,9 @@ $('#pdf-viewer').on('click', function(e){
   else if(x>w-m && currentPage<pdfDoc.numPages) queueRenderPage(currentPage+1,'next');
 });
 
-// === Google Drive API 설정 ===
-const CLIENT_ID = 'YOUR_CLIENT_ID';
-const API_KEY = 'YOUR_API_KEY';
+// === Google Drive API ===
+const CLIENT_ID = 'YOUR_CLIENT_ID_HERE';
+const API_KEY = 'YOUR_API_KEY_HERE';
 const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
 const SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
 
