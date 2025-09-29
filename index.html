@@ -1,89 +1,157 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Drive PDF 뷰어</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>PDF Reader (Local + Drive)</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+  <script src="https://apis.google.com/js/api.js"></script>
+  <style>
+    body { margin:0; font-family:Arial; background:#fff; color:#000; transition:0.3s; }
+    body.dark-mode { background:#121212; color:#eee; }
+    header { display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f0f0f0; }
+    body.dark-mode header { background:#1e1e1e; }
+    h1 { margin:0; font-size:18px; flex:1; text-align:center; }
+    #pdf-controls { display:flex; align-items:center; gap:10px; }
+    #pdf-viewer { text-align:center; margin-top:10px; position:relative; overflow:hidden; height:80vh; }
+    .canvas-wrapper { display:inline-block; position:absolute; top:0; left:0; width:100%; height:100%; }
+    canvas { border:1px solid #ccc; max-width:100%; }
+    #slider { width:300px; margin:10px auto; }
+    button { padding:5px 10px; cursor:pointer; }
+    #drive-file-list { margin-top:10px; }
+  </style>
 </head>
-<body class="bg-gray-100 font-sans antialiased text-gray-800">
+<body>
 
-    <div class="container mx-auto p-4 md:p-8">
-        <header class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-gray-700">Google Drive PDF 뷰어</h1>
-            <p class="text-gray-500 mt-2">Google Drive에 있는 PDF 파일을 선택하고 슬라이드하며 보세요.</p>
-        </header>
+<header>
+  <input type="file" id="file-input" accept="application/pdf">
+  <h1 id="pdf-title">PDF Reader</h1>
+  <div id="pdf-controls">
+    <button id="prev-page">이전</button>
+    <button id="next-page">다음</button>
+    <span id="page-info"></span>
+    <button id="zoom-in">+</button>
+    <button id="zoom-out">-</button>
+    <button id="rotate">회전</button>
+    <button id="toggle-mode">다크/화이트</button>
+    <button id="fullscreen">전체화면</button>
+    <button id="drive-login">Drive 로그인</button>
+  </div>
+</header>
 
-        <!-- API 키 및 클라이언트 ID 설정 섹션 -->
-        <div id="config-section" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-lg mb-6 max-w-4xl mx-auto">
-            <h2 class="font-bold text-lg mb-2">중요: 설정 안내</h2>
-            <p>이 애플리케이션을 사용하려면 Google Cloud Console에서 API 키와 OAuth 2.0 클라이언트 ID를 발급받아 아래 필드에 입력해야 합니다. 자세한 내용은 README.md 파일을 참고하세요.</p>
-            <div class="mt-4">
-                <input type="text" id="api-key" placeholder="여기에 API Key를 입력하세요" class="w-full p-2 border rounded shadow-sm text-gray-700">
-                <input type="text" id="client-id" placeholder="여기에 Client ID를 입력하세요" class="w-full p-2 border rounded shadow-sm mt-2 text-gray-700">
-                <button id="save-config" class="mt-3 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded transition duration-300">
-                    설정 저장
-                </button>
-            </div>
-        </div>
+<div id="slider"></div>
+<div id="pdf-viewer"></div>
+<div id="drive-file-list"></div>
 
-        <!-- 인증 및 파일 목록 섹션 -->
-        <div id="main-content" class="hidden">
-            <div class="text-center mb-6">
-                <button id="authorize_button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 hidden">Google Drive 인증</button>
-                <button id="signout_button" class="hidden bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">로그아웃</button>
-            </div>
+<script>
+let pdfDoc = null, currentPage = 1, scale = 1.2, rotation = 0, fileName = '';
 
-            <div id="file-list-container" class="hidden bg-white p-6 rounded-lg shadow-md max-w-4xl mx-auto">
-                <h2 class="text-2xl font-semibold mb-4 border-b pb-2">PDF 파일 목록</h2>
-                <div id="file-list" class="max-h-96 overflow-y-auto">
-                    <!-- 파일 목록이 여기에 동적으로 추가됩니다 -->
-                </div>
-                 <div id="loading-files" class="text-center p-4 hidden">
-                    <p class="text-gray-500">파일을 불러오는 중...</p>
-                </div>
-            </div>
-        </div>
+// === PDF 렌더링 함수 ===
+function renderPage(num, direction=null){
+  pdfDoc.getPage(num).then(page=>{
+    const viewport = page.getViewport({scale, rotation});
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = viewport.width; canvas.height = viewport.height;
+    page.render({canvasContext:ctx, viewport}).promise.then(()=>{
+      const wrapper = $('<div class="canvas-wrapper"></div>').append(canvas);
+      $('#pdf-viewer').append(wrapper);
+      if(direction){
+        let offset = direction==='next'?$('#pdf-viewer').width():-$('#pdf-viewer').width();
+        wrapper.css({left:offset, opacity:0});
+        $('#pdf-viewer .canvas-wrapper').not(wrapper).animate({left:-offset,opacity:0},400,function(){ $(this).remove(); });
+        wrapper.animate({left:0, opacity:1},400);
+      } else { $('#pdf-viewer').empty().append(wrapper); }
+      $('#page-info').text(num+' / '+pdfDoc.numPages);
+      $('#slider').slider('value',num);
+    });
+  });
+}
 
-        <!-- PDF 뷰어 섹션 -->
-        <div id="viewer-container" class="hidden mt-8">
-             <div class="text-center mb-4">
-                <button id="back-to-list" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition duration-300">
-                    &larr; 파일 목록으로 돌아가기
-                </button>
-            </div>
-            <div class="bg-white p-4 md:p-8 rounded-lg shadow-xl max-w-4xl mx-auto">
-                <h3 id="pdf-title" class="text-2xl font-bold text-center mb-4 truncate"></h3>
-                <div id="pdf-viewer" class="flex justify-center items-center mb-4">
-                    <!-- PDF 페이지가 캔버스에 렌더링됩니다 -->
-                </div>
-                <div id="navigation-controls" class="flex items-center justify-center space-x-4">
-                    <button id="prev-page" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-full transition duration-300 shadow-lg">&lt; 이전</button>
-                    <div>
-                        <span id="page-num" class="text-lg font-semibold"></span> / <span id="page-count" class="text-lg font-semibold"></span>
-                    </div>
-                    <button id="next-page" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-full transition duration-300 shadow-lg">다음 &gt;</button>
-                </div>
-                 <div id="loading-pdf" class="text-center p-4 hidden">
-                    <p class="text-gray-500">PDF 파일을 불러오는 중...</p>
-                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                        <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+function queueRenderPage(num, direction=null){
+  if(num>=1 && num<=pdfDoc.numPages){ currentPage=num; renderPage(num,direction); }
+}
 
-    <!-- 외부 라이브러리 (안정적인 최신 CDN으로 변경) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="https://apis.google.com/js/api.js"></script>
-    <script src="https://accounts.google.com/gsi/client"></script>
-    
-    <!-- Custom Script (라이브러리 로드 후 실행) -->
-    <script src="script.js"></script>
+// === 로컬 파일 이벤트 ===
+$('#file-input').on('change', e=>{
+  const file = e.target.files[0];
+  if(file && file.type==='application/pdf'){
+    fileName=file.name; $('#pdf-title').text(fileName);
+    const reader = new FileReader();
+    reader.onload=function(){ 
+      const typedarray=new Uint8Array(this.result);
+      pdfjsLib.getDocument(typedarray).promise.then(pdf=>{
+        pdfDoc=pdf; currentPage=1;
+        $('#slider').slider({min:1,max:pdf.numPages,value:1,slide:(e,ui)=>{queueRenderPage(ui.value, ui.value>currentPage?'next':'prev');}});
+        renderPage(1);
+      });
+    };
+    reader.readAsArrayBuffer(file);
+  }
+});
+
+// === UI 버튼 이벤트 ===
+$('#prev-page').click(()=>{ if(currentPage>1) queueRenderPage(currentPage-1,'prev'); });
+$('#next-page').click(()=>{ if(currentPage<pdfDoc.numPages) queueRenderPage(currentPage+1,'next'); });
+$('#zoom-in').click(()=>{ scale+=0.2; renderPage(currentPage); });
+$('#zoom-out').click(()=>{ if(scale>0.4){ scale-=0.2; renderPage(currentPage); }});
+$('#rotate').click(()=>{ rotation=(rotation+90)%360; renderPage(currentPage); });
+$('#toggle-mode').click(()=>{$('body').toggleClass('dark-mode');});
+$('#fullscreen').click(()=>{ const el=document.getElementById('pdf-viewer'); if(el.requestFullscreen) el.requestFullscreen(); });
+
+// === 키보드 & 클릭 ===
+$(document).on('keydown', e=>{
+  if(e.key==='ArrowLeft' && currentPage>1) queueRenderPage(currentPage-1,'prev');
+  else if(e.key==='ArrowRight' && currentPage<pdfDoc.numPages) queueRenderPage(currentPage+1,'next');
+});
+$('#pdf-viewer').on('click', e=>{
+  const w=$(this).width(), x=e.pageX-$(this).offset().left, m=w*0.15;
+  if(x<m && currentPage>1) queueRenderPage(currentPage-1,'prev');
+  else if(x>w-m && currentPage<pdfDoc.numPages) queueRenderPage(currentPage+1,'next');
+});
+
+// === Google Drive API 설정 ===
+const CLIENT_ID = 'YOUR_CLIENT_ID';
+const API_KEY = 'YOUR_API_KEY';
+const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
+const SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
+
+function handleClientLoad(){ gapi.load('client:auth2', initClient); }
+function initClient(){
+  gapi.client.init({apiKey:API_KEY, clientId:CLIENT_ID, discoveryDocs:DISCOVERY_DOCS, scope:SCOPES})
+    .then(()=>{ gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus); updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get()); });
+}
+
+function updateSigninStatus(isSignedIn){ if(isSignedIn) listFiles(); else gapi.auth2.getAuthInstance().signIn(); }
+
+function listFiles(){
+  gapi.client.drive.files.list({pageSize:20, fields:"files(id,name,mimeType)"}).then(res=>{
+    const files=res.result.files;
+    const list=$('#drive-file-list').empty();
+    files.forEach(f=>{
+      if(f.mimeType==='application/pdf'){
+        $('<button>').text(f.name).click(()=>loadPdfFromDrive(f.id,f.name)).appendTo(list);
+      }
+    });
+  });
+}
+
+function loadPdfFromDrive(fileId,name){
+  gapi.client.drive.files.get({fileId:fileId, alt:'media'}).then(res=>{
+    const typedarray=new Uint8Array(res.body);
+    pdfjsLib.getDocument(typedarray).promise.then(pdf=>{
+      pdfDoc=pdf; currentPage=1; fileName=name;
+      $('#pdf-title').text(name);
+      $('#slider').slider({min:1,max:pdf.numPages,value:1,slide:(e,ui)=>{queueRenderPage(ui.value, ui.value>currentPage?'next':'prev');}});
+      renderPage(1);
+    });
+  });
+}
+
+// === Drive 로그인 버튼 ===
+$('#drive-login').click(handleClientLoad);
+</script>
 </body>
 </html>
-
