@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Term Project - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <a href="index.html">
+                    <img src="file/logo.png" alt="로고">
+                </a>
+            </div>
+            <button class="mobile-menu-btn" onclick="toggleMenu()">
+                <span></span><span></span><span></span>
+            </button>
+            <div class="main_menu" id="mainMenu">
+                <a href="info.html">Info</a>
+                <a href="readme.html">Setting</a>
+                <a href="pdf.html">PDF viewer</a>
+            </div>
+        </div>
+        <hr class="header-line">
+    </header>
+
+    <main class="dashboard-container center-mode">
+        <section class="status-grid full-width">
+            
+            <div class="status-card">
+                <div class="card-header">
+                    <i data-lucide="clock" class="icon-gray"></i>
+                    <span>현재 시간</span>
+                </div>
+                <div class="card-value" id="live-clock">00:00:00</div>
+                <div class="card-sub" id="live-date">-</div>
+            </div>
+
+            <div class="status-card">
+                <div class="card-header">
+                    <i data-lucide="monitor-smartphone" class="icon-gray"></i>
+                    <span>기기 환경</span>
+                </div>
+                <div class="card-value" id="device-type">Checking...</div>
+                <div class="card-sub text-green">
+                    <span class="status-dot"></span> Optimized
+                </div>
+            </div>
+
+            <div class="status-card">
+                <div class="card-header">
+                    <i data-lucide="maximize" class="icon-gray"></i>
+                    <span>해상도</span>
+                </div>
+                <div class="card-value" id="screen-res">0 x 0</div>
+                <div class="card-sub">Real-time Size</div>
+            </div>
+
+            <div class="status-card">
+                <div class="card-header">
+                    <i data-lucide="wifi" class="icon-gray"></i>
+                    <span>네트워크 상태</span>
+                </div>
+                <div class="card-value text-blue" id="net-status">Online</div>
+                <div class="card-sub">Google API Ready</div>
+            </div>
+
+        </section>
+    </main>
+
+    <footer>
+        <p>2021136129 조재윤 2025 모바일 프로그래밍 텀프로젝트</p>
+    </footer>
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('mainMenu').classList.toggle('active');
+        }
+        lucide.createIcons();
+
+        function updateDashboard() {
+            const now = new Date();
+            
+            // 1. 시간
+            document.getElementById('live-clock').textContent = now.toLocaleTimeString('en-US', { hour12: false });
+            document.getElementById('live-date').textContent = now.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            // 2. 기기 타입 감지 (Tablet 추가)
+            const ua = navigator.userAgent;
+            const width = window.innerWidth;
+            let type = 'PC Desktop';
+
+            // 모바일/태블릿 감지 정규식
+            const isAndroid = /Android/i.test(ua);
+            const isiOS = /iPhone|iPad|iPod/i.test(ua);
+            const isMobileUA = /Mobile/i.test(ua); // 'Mobile' 키워드가 있으면 보통 스마트폰
+
+            // 태블릿 체크 로직
+            // 1) iPadOS 13+ (Macintosh로 잡히지만 터치 포인트가 있음)
+            const isIpadOS = (navigator.maxTouchPoints > 1) && /Macintosh/i.test(ua);
+            // 2) 일반 태블릿 (iPad UA 포함 or 안드로이드이면서 모바일 키워드 없음)
+            const isTabletUA = /iPad/i.test(ua) || (isAndroid && !isMobileUA);
+
+            if (isTabletUA || isIpadOS) {
+                type = 'Tablet Device';
+            } else if (isMobileUA || (isiOS && !isIpadOS)) {
+                type = 'Mobile Device';
+            }
+
+            document.getElementById('device-type').textContent = type;
+
+            // 3. 해상도
+            document.getElementById('screen-res').textContent = `${window.innerWidth} x ${window.innerHeight}`;
+
+            // 4. 네트워크
+            const isOnline = navigator.onLine;
+            const netEl = document.getElementById('net-status');
+            netEl.textContent = isOnline ? 'Online' : 'Offline';
+            netEl.className = isOnline ? 'card-value text-blue' : 'card-value text-red';
+        }
+
+        updateDashboard();
+        setInterval(updateDashboard, 1000);
+        window.addEventListener('resize', updateDashboard);
+        window.addEventListener('online', updateDashboard);
+        window.addEventListener('offline', updateDashboard);
+    </script>
+</body>
+</html>

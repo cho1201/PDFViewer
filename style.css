@@ -1,0 +1,651 @@
+/* ========================================= */
+/* 1. 공통 스타일 (Reset & Background) */
+/* ========================================= */
+* {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+}
+body { 
+    overscroll-behavior: none;
+    
+    background-color: #f9fafb; /* 이미지가 안 뜰 때 보일 기본색 */
+    
+    display: flex;
+    flex-direction: column; /* 요소를 세로로 배치 */
+    min-height: 100vh;      /* 최소 높이를 화면 전체 높이(100vh)로 설정 */
+    
+    /* 배경 공통 옵션 */
+    background-size: cover;       /* 화면 꽉 채우기 */
+    background-position: center;  /* 중앙 정렬 */
+    background-repeat: no-repeat;
+    background-attachment: fixed; /* 스크롤 해도 배경 고정 */
+
+    /* [PC용] 가로가 긴 이미지 주소를 여기에 넣으세요 */
+    background-image: url('https://images.unsplash.com/photo-1623667322051-18662ce6334c?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OXx8cGRmfGVufDB8fDB8fHwy');
+}
+
+/* ========================================= */
+/* 2. 태블릿 배경 (1024px 이하) */
+/* ========================================= */
+@media screen and (max-width: 1024px) {
+    body {
+        /* [태블릿용] 적당한 비율의 이미지 주소 */
+        background-image: url('https://images.unsplash.com/photo-1623667322051-18662ce6334c?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OXx8cGRmfGVufDB8fDB8fHwy');
+    }
+}
+
+/* ========================================= */
+/* 3. 모바일 배경 (768px 이하) */
+/* ========================================= */
+@media screen and (max-width: 768px) {
+    body {
+        /* [모바일용] 세로로 긴(Portrait) 이미지 주소를 넣으세요 */
+        background-image: url('https://images.unsplash.com/photo-1644329771977-0a8c6e3928ae?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+    }
+}
+
+/* ========================================= */
+/* 2. 헤더 & 네비게이션 (반응형 적용) */
+/* ========================================= */
+
+header {
+    background-color: white; /* 필요시 배경색 지정 */
+    position: relative;
+    z-index: 50; /* 메뉴가 다른 요소 위에 뜨도록 설정 */
+}
+
+/* 헤더 내용을 감싸는 컨테이너 (HTML 구조 변경 필요) */
+.header-content {
+    /* PC 기본값: 블록 요소로 위아래 배치 */
+    display: block;
+    text-align: center;
+    padding: 0;
+}
+
+/* 가로 구분선 */
+.header-line {
+    border: none;
+    border-bottom: 1px solid #ccc;
+    margin: 0 20px;
+}
+
+/* --- 로고 스타일 --- */
+.logo {
+    padding : 30px;
+    margin:0 20px 0;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.logo a {
+    display: inline-block;
+}
+
+.logo img {
+    /* PC에서는 원본 비율 유지하되 너무 크지 않게 */
+    width: 75%; 
+    height: auto;
+    max-width: 300px; 
+}
+
+/* --- 메뉴 스타일 (PC) --- */
+.main_menu {
+    display: block;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.main_menu a {
+    display: inline-block;
+    margin: 0 15px;
+    padding: 8px 12px;
+    text-decoration: none;
+    color: #444;
+    font-weight: bold;
+    font-size: 16px;
+    transition: color 0.2s, background-color 0.2s;
+    border-radius: 6px;
+}
+
+.main_menu a:hover {
+    color: #2277ff;
+    background-color: rgba(0,0,0,0.03);
+}
+
+/* 모바일 메뉴 버튼 (PC에선 숨김) */
+.mobile-menu-btn {
+    display: none;
+}
+
+/* ========================================= */
+/* [중요] 모바일 헤더 레이아웃 (768px 이하) */
+/* ========================================= */
+@media screen and (max-width: 768px) {
+    
+    /* 1. 헤더 컨텐츠: Flexbox로 좌우 배치 */
+    .header-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between; /* 로고 왼쪽, 버튼 오른쪽 */
+        padding: 15px 20px;
+        background-color: rgba(255,255,255,0.8); /* 가독성을 위해 약간의 배경 추가 */
+        backdrop-filter: blur(5px);
+    }
+
+    /* 2. 가로줄 제거 */
+    .header-line {
+        display: none;
+    }
+
+    /* 3. 로고: 여백 제거 및 크기 축소 */
+    .logo {
+        margin: 0;
+        text-align: left;
+        flex-shrink: 0;
+    }
+    .logo img {
+        width: auto;
+        height: 40px; /* 모바일 높이 고정 */
+        max-width: none;
+    }
+
+    /* 4. 햄버거 버튼 활성화 */
+    .mobile-menu-btn {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        width: 28px;
+        height: 20px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        z-index: 60;
+    }
+    .mobile-menu-btn span {
+        display: block;
+        width: 100%;
+        height: 3px;
+        background-color: #333;
+        border-radius: 3px;
+        transition: all 0.3s ease;
+    }
+
+    /* 5. 메뉴 목록 (드롭다운) */
+    .main_menu {
+        display: none; /* 평소엔 숨김 */
+        flex-direction: column;
+        position: absolute;
+        top: 100%; /* 헤더 바로 아래 */
+        left: 0;
+        width: 100%;
+        background-color: white;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        padding: 10px 0;
+        margin: 0;
+        z-index: 55;
+        border-top: 1px solid #eee;
+    }
+
+    /* JS로 .active 클래스가 붙으면 보임 */
+    .main_menu.active {
+        display: flex;
+        animation: slideDown 0.3s ease forwards;
+    }
+
+    .main_menu a {
+        display: block;
+        margin: 0;
+        padding: 15px 0;
+        border-bottom: 1px solid #f3f4f6;
+        width: 100%;
+    }
+    .main_menu a:last-child {
+        border-bottom: none;
+    }
+}
+
+/* 메뉴 슬라이드 애니메이션 */
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+
+/* ========================================= */
+/* 3. 푸터 스타일 */
+/* ========================================= */
+footer {
+    /* [추가] 위쪽 요소와의 간격을 자동으로 최대화 -> 바닥에 붙음 */
+    margin-top: auto; 
+
+    padding: 20px 10px;
+    background-color: #333;
+    text-align: center;
+}
+
+footer p {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+/* ========================================= */
+/* 4. info.html 전용 스타일 */
+/* ========================================= */
+.readme-wrap {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 32px;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+.readme-wrap h2 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: #111827;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+}
+.readme-wrap h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-top: 28px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 8px;
+}
+.readme-wrap p {
+    font-size: 1rem;
+    line-height: 1.75;
+    color: #374151;
+    margin-bottom: 16px;
+}
+
+/* 기능 설명용 리스트 스타일 */
+.func-set {
+    display: flex;
+    padding-top: 4px;
+    padding-bottom: 12px;
+    align-items: flex-start;
+    font-size: 1rem;
+    line-height: 1.75;
+}
+.func-title {
+    color: #111827;
+    font-size: 1rem;
+    font-weight: 600;
+    width: 100px;
+    flex-shrink: 0;
+}
+.func-txt {
+    padding-left: 18px;
+    color: #374151;
+}
+
+/* ========================================= */
+/* 5. readme.html 전용 스타일 */
+/* ========================================= */
+.readme {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 32px;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+.readme h2 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: #111827;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+}
+.readme h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-top: 28px;
+    margin-bottom: 12px;
+}
+.readme h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #374151;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+.readme p {
+    font-size: 1rem;
+    line-height: 1.75;
+    color: #374151;
+    margin-bottom: 16px;
+}
+.readme ol {
+    list-style-type: decimal;
+    padding-left: 24px;
+    margin-bottom: 16px;
+}
+.readme li {
+    line-height: 1.75;
+    margin-bottom: 8px;
+    color: #374151;
+}
+.readme code {
+    background-color: #f3f4f6;
+    color: #dc2626;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+/* ========================================= */
+/* 6. PDF Viewer (viewer.js 관련) 스타일 */
+/* ========================================= */
+.slide-panel { 
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+    will-change: transform; 
+}
+.sidebar-collapsed .sidebar-content { 
+    opacity: 0; 
+    pointer-events: none; 
+}
+.sidebar-collapsed { 
+    width: 0 !important; 
+    border-width: 0 !important; 
+}
+.memo-scroll::-webkit-scrollbar { 
+    width: 6px; 
+}
+.memo-scroll::-webkit-scrollbar-track { 
+    background: transparent; 
+}
+.memo-scroll::-webkit-scrollbar-thumb { 
+    background: #d1d5db; 
+    border-radius: 3px; 
+}
+
+/* 모바일 메모 패널 애니메이션 */
+#mobile-memo-panel { 
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+    will-change: transform; 
+    transform: translateY(100%); 
+    z-index: 30; 
+}
+#mobile-memo-panel.open { 
+    transform: translateY(0); 
+}
+#viewer-area.memo-open #pdf-container { 
+    height: 60%; 
+}
+
+/* iframe 상단 툴바 제거용 클리핑 */
+#pdf-frame.clipped {
+    clip-path: inset(56px 0 0 0);
+    margin-top: -56px; 
+    height: calc(100% + 56px);
+}
+
+
+/* ========================================= */
+/* 7. Index Page Dashboard Style (New) */
+/* ========================================= */
+
+.dashboard-container {
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 40px 20px;
+    flex: 1;
+    display: flex;
+    align-items: center; /* 수직 중앙 정렬 */
+    justify-content: space-between; /* 좌우 배분 */
+    gap: 40px;
+}
+
+/* 왼쪽: 인트로 패널 */
+.intro-panel {
+    flex: 1;
+    max-width: 450px;
+}
+
+.badge {
+    display: inline-block;
+    background-color: #dcfce7;
+    color: #16a34a;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.app-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: #111827;
+    margin-bottom: 16px;
+    letter-spacing: -1px;
+}
+
+.app-desc {
+    font-size: 1.125rem;
+    color: #6b7280;
+    line-height: 1.6;
+    margin-bottom: 40px;
+}
+
+/* 실행 버튼 스타일 */
+.launch-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #111827;
+    color: white;
+    padding: 16px 24px;
+    border-radius: 16px;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.launch-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+    background-color: #000;
+}
+
+.btn-content { display: flex; flex-direction: column; }
+.btn-label { font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; }
+.btn-sub { font-size: 1.25rem; font-weight: 700; }
+.btn-icon { background: #374151; padding: 10px; border-radius: 10px; }
+
+
+/* 오른쪽: 상태 그리드 */
+.status-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2열 */
+    gap: 20px;
+}
+
+.status-card {
+    background: rgba(255, 255, 255, 0.8); /* 반투명 배경 */
+    backdrop-filter: blur(10px);
+    border: 1px solid #e5e7eb;
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.card-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 4px;
+    white-space: nowrap; /* 줄바꿈 방지 */
+}
+
+.card-sub {
+    font-size: 0.85rem;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* 유틸리티 클래스 */
+.icon-gray { width: 16px; height: 16px; color: #9ca3af; }
+.text-green { color: #16a34a; }
+.text-blue { color: #2563eb; }
+.text-red { color: #dc2626; }
+.status-dot { width: 8px; height: 8px; background-color: #16a34a; border-radius: 50%; display: inline-block; }
+
+/* 모바일 반응형 (Index 전용) */
+@media screen and (max-width: 900px) {
+    .dashboard-container {
+        flex-direction: column; /* 세로 배치 */
+        align-items: stretch;
+        padding-top: 20px;
+    }
+    
+    .intro-panel { 
+        max-width: 100%; 
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .app-title { font-size: 2.5rem; }
+    
+    .launch-btn { 
+        max-width: 100%; 
+        margin-top: 20px;
+    }
+
+    .status-grid {
+        grid-template-columns: 1fr; /* 모바일에서 1열로 변경 (카드 크게 보기) */
+    }
+}/* ========================================= */
+/* 7. Dashboard Only Style (수정됨) */
+/* ========================================= */
+
+.dashboard-container {
+    max-width: 900px; /* 전체 너비를 적당히 제한 */
+    width: 100%;
+    margin: 0 auto;
+    padding: 40px 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* 수직 중앙 */
+    align-items: center;     /* 수평 중앙 */
+}
+
+/* 대시보드 제목 (새로 추가) */
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 40px;
+    animation: fadeUp 0.8s ease-out;
+}
+
+.dashboard-header h2 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: 8px;
+}
+
+.dashboard-header p {
+    font-size: 1.1rem;
+    color: #6b7280;
+}
+
+
+/* 그리드 스타일 (중앙 정렬 최적화) */
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2x2 격자 */
+    gap: 24px;
+    width: 100%;
+    animation: fadeUp 0.8s ease-out 0.2s backwards;
+}
+
+.status-card {
+    background: rgba(255, 255, 255, 0.9); /* 가독성을 위해 불투명도 올림 */
+    backdrop-filter: blur(10px);
+    border: 1px solid #e5e7eb;
+    padding: 32px; /* 내부 여백 키움 */
+    border-radius: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    text-align: center; /* 내용 중앙 정렬 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+.status-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 16px;
+}
+
+.card-value {
+    font-size: 2rem; /* 글씨 더 크게 */
+    font-weight: 800;
+    color: #1f2937;
+    margin-bottom: 8px;
+    white-space: nowrap;
+}
+
+.card-sub {
+    font-size: 0.95rem;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+
+/* 유틸리티 클래스 */
+.icon-gray { width: 20px; height: 20px; color: #9ca3af; }
+.text-green { color: #16a34a; }
+.text-blue { color: #2563eb; }
+.text-red { color: #dc2626; }
+.status-dot { width: 8px; height: 8px; background-color: #16a34a; border-radius: 50%; display: inline-block; }
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 모바일 반응형 (Index 전용) */
+@media screen and (max-width: 768px) {
+    .dashboard-header h2 { font-size: 2rem; }
+    .status-grid {
+        grid-template-columns: 1fr; /* 모바일에서 1열로 변경 */
+    }
+}

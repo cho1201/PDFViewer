@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Term Project - PDF Viewer</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body class="bg-gray-50 text-gray-800 touch-manipulation">
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <a href="index.html">
+                    <img src="file/logo.png" alt="로고">
+                </a>
+            </div>
+
+            <button class="mobile-menu-btn" onclick="toggleMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+            <div class="main_menu" id="mainMenu">
+                <a href="info.html">Info</a>
+                <a href="readme.html">Setting</a>
+                <a href="pdf.html">PDF viewer</a>
+            </div>
+        </div>
+        <hr class="header-line">
+    </header>
+
+    <script>
+        function toggleMenu() {
+            const menu = document.getElementById('mainMenu');
+            menu.classList.toggle('active');
+        }
+    </script>
+
+    <!-- 2. PDF 뷰어 앱 -->
+
+    <!-- 로그인 화면: [수정] h-full -> min-h-[70vh] (푸터가 밀리지 않도록 최소 높이 설정) -->
+    <div id="login-screen" class="flex flex-col items-center justify-center p-4 min-h-[70vh]">
+        <div class="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full space-y-6 text-center transition-all hover:shadow-2xl">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-green-100 text-green-600 rounded-full mb-4">
+                <i data-lucide="hard-drive" class="w-10 h-10"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900">드라이브 PDF 뷰어</h1>
+            <p class="text-gray-600">Google Drive에 메모를 직접 저장합니다.<br>(모바일 지원)</p>
+            <div id="login-error" class="hidden bg-red-50 text-red-600 p-3 rounded-lg text-sm text-left flex items-start gap-2">
+                <i data-lucide="alert-circle" class="w-5 h-5 flex-shrink-0 mt-0.5"></i>
+                <span id="login-error-msg"></span>
+            </div>
+            <div class="space-y-4 text-left">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
+                    <input type="text" id="client-id" placeholder="OAuth 2.0 Client ID" class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">API Key</label>
+                    <input type="password" id="api-key" placeholder="API Key" class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition">
+                </div>
+            </div>
+            <button id="login-btn" disabled class="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg disabled:bg-gray-400">
+                <span>Google 계정으로 시작하기</span>
+                <i data-lucide="log-in" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- 대시보드 화면: [수정] h-full -> h-[80vh] (앱 영역의 높이를 80%로 고정) -->
+    <div id="dashboard-screen" class="hidden h-[80vh] flex flex-col">
+        <header class="bg-white border-b px-4 py-3 hidden md:flex items-center justify-between flex-shrink-0 shadow-sm z-40 relative">
+            <div class="flex items-center gap-3">
+                <button id="toggle-sidebar-l-btn" class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"><i data-lucide="panel-left" class="w-5 h-5"></i></button>
+                <div class="flex items-center gap-2.5">
+                    <div class="p-2 bg-green-50 rounded-lg text-green-600"><i data-lucide="folder-open" class="w-6 h-6"></i></div>
+                    <h1 class="font-bold text-xl text-gray-800 truncate">PDF 뷰어</h1>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="file-count" class="text-sm text-gray-500"></span>
+                <button id="toggle-memo-btn" class="p-2 text-gray-500 hover:bg-green-50 hover:text-green-600 rounded-lg transition-colors hidden"><i data-lucide="sticky-note" class="w-5 h-5"></i></button>
+                <div class="h-6 w-px bg-gray-300"></div>
+                <button id="logout-btn" class="text-sm text-gray-500 hover:text-red-600 flex items-center gap-1 transition-colors px-3 py-1.5 hover:bg-red-50 rounded-lg"><i data-lucide="log-out" class="w-4 h-4"></i>나가기</button>
+            </div>
+        </header>
+
+        <main class="flex-1 flex overflow-hidden relative">
+            <aside id="sidebar-l" class="slide-panel absolute inset-y-0 left-0 z-20 md:relative w-full md:w-80 bg-white border-r flex flex-col overflow-hidden">
+                <div class="sidebar-content flex flex-col h-full">
+                    <div class="md:hidden p-4 border-b flex items-center justify-between bg-gray-50">
+                         <h2 class="font-bold text-lg flex items-center gap-2"><i data-lucide="folder-open" class="w-5 h-5 text-green-600"></i> 파일 목록</h2>
+                         <button id="mobile-logout-btn" class="text-sm text-gray-500 px-2 py-1 border rounded hover:bg-gray-200">나가기</button>
+                    </div>
+                    <div id="status-msg" class="p-4 text-center text-gray-500 bg-gray-50 border-b animate-pulse hidden flex-shrink-0"></div>
+                    <div id="file-list" class="flex-1 overflow-y-auto p-3 space-y-2 memo-scroll overscroll-contain"></div>
+                </div>
+            </aside>
+
+            <section id="viewer-area" class="slide-panel flex-1 bg-gray-100 flex flex-col relative z-10 overflow-hidden translate-x-full md:translate-x-0 transition-all duration-300 ease-out">
+                <div class="md:hidden bg-white border-b px-4 py-3 flex items-center gap-3 shadow-sm sticky top-0 flex-shrink-0 z-20">
+                    <button id="back-to-list-btn" class="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full"><i data-lucide="chevron-left" class="w-6 h-6"></i></button>
+                    <h2 id="mobile-viewer-title" class="font-medium text-lg truncate flex-1"></h2>
+                    <button id="mobile-toggle-memo-btn" class="p-2 text-gray-500 hover:bg-gray-100 rounded-full relative">
+                         <i data-lucide="sticky-note" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <div id="pdf-container" class="flex-1 relative w-full h-full bg-gray-200 transition-all duration-300 overflow-hidden">
+                    <div id="viewer-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 space-y-4 bg-gray-50">
+                        <div class="p-6 bg-white rounded-full shadow-sm"><i data-lucide="file-text" class="w-16 h-16 text-green-100"></i></div>
+                        <p class="text-lg hidden md:block">파일을 선택하세요.</p>
+                    </div>
+                    <iframe id="pdf-frame" class="absolute inset-0 w-full h-full hidden clipped" src="about:blank" allow="autoplay"></iframe>
+                </div>
+
+                <div id="mobile-memo-panel" class="md:hidden absolute bottom-0 left-0 right-0 h-[40%] bg-white border-t rounded-t-2xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex flex-col">
+                    <div class="p-3 border-b flex items-center justify-between bg-gray-50 rounded-t-2xl flex-shrink-0">
+                        <h3 class="font-bold flex items-center gap-2 text-gray-800"><i data-lucide="hard-drive" class="w-4 h-4 text-green-500"></i> 메모</h3>
+                        <button id="close-mobile-memo-btn" class="p-1 text-gray-400 hover:bg-gray-200 rounded-full"><i data-lucide="chevron-down" class="w-5 h-5"></i></button>
+                    </div>
+                    <div class="flex-1 overflow-hidden flex flex-col relative">
+                        <div id="mobile-memo-loading" class="absolute inset-0 bg-white/80 flex items-center justify-center z-20 hidden"><i data-lucide="loader-2" class="w-6 h-6 text-green-600 animate-spin"></i></div>
+                        <div class="p-3 border-b bg-white flex gap-2 flex-shrink-0">
+                            <input type="number" id="mobile-memo-page" min="1" placeholder="P." class="w-14 p-2 border rounded text-center text-sm">
+                            <input type="text" id="mobile-memo-text" placeholder="메모 입력..." class="flex-1 p-2 border rounded text-sm">
+                            <button id="mobile-save-memo-btn" class="bg-green-600 text-white px-3 rounded flex items-center justify-center"><i data-lucide="send" class="w-4 h-4"></i></button>
+                        </div>
+                        <div id="mobile-memo-list" class="flex-1 overflow-y-auto p-3 space-y-2 memo-scroll overscroll-contain bg-gray-50"></div>
+                    </div>
+                </div>
+            </section>
+
+            <aside id="sidebar-r" class="slide-panel absolute inset-y-0 right-0 z-30 md:relative w-full md:w-80 bg-white border-l flex flex-col overflow-hidden translate-x-full md:translate-x-0 sidebar-collapsed hidden md:flex">
+                 <div class="sidebar-content flex flex-col h-full bg-gray-50">
+                    <div class="p-4 bg-white border-b flex items-center justify-between flex-shrink-0">
+                        <h3 class="font-bold flex items-center gap-2 text-gray-800"><i data-lucide="hard-drive" class="w-5 h-5 text-green-500"></i> 드라이브 메모</h3>
+                        <button id="close-memo-btn" class="md:hidden"><i data-lucide="x" class="w-5 h-5"></i></button>
+                    </div>
+                    <div class="p-4 bg-white border-b space-y-3 flex-shrink-0 relative">
+                        <div id="memo-loading" class="absolute inset-0 bg-white/80 flex items-center justify-center z-10 hidden"><i data-lucide="loader-2" class="w-6 h-6 text-green-600 animate-spin"></i></div>
+                        <div class="flex items-center gap-2">
+                            <label class="text-sm font-medium text-gray-600">Page</label>
+                            <input type="number" id="memo-page" min="1" placeholder="1" class="w-20 p-2 border rounded-lg text-center focus:ring-2 focus:ring-green-500 outline-none">
+                        </div>
+                        <textarea id="memo-text" rows="3" placeholder="메모 내용을 입력하세요..." class="w-full p-3 border rounded-lg resize-none focus:ring-2 focus:ring-green-500 outline-none text-sm"></textarea>
+                        <button id="save-memo-btn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"><i data-lucide="save" class="w-4 h-4"></i> 저장</button>
+                    </div>
+                    <div id="memo-list" class="flex-1 overflow-y-auto p-3 space-y-3 memo-scroll"></div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <!-- 3. 홈페이지 푸터 -->
+    <footer>
+        <p>2021136129 조재윤 2025 모바일 프로그래밍 텀프로젝트</p>
+    </footer>
+
+    <!-- 4. PDF 뷰어용 스크립트 -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
+    <script src="viewer.js"></script>
+</body>
+</html>
