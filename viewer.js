@@ -308,7 +308,7 @@ async function fetchPDFFiles() {
         const filesRes = await gapi.client.drive.files.list({
             q: `'${fRes.result.files[0].id}' in parents and mimeType='application/pdf' and trashed=false`,
             fields: 'files(id, name, webViewLink, createdTime)',
-            orderBy: 'createdTime desc'
+            orderBy: 'name desc'
         });
 
         currentFiles = filesRes.result.files;
@@ -452,3 +452,4 @@ function showMemoLoading(l) {
     els.memoLoading.classList.toggle('hidden', !l);
     els.mobileMemoLoading.classList.toggle('hidden', !l);
 }
+
